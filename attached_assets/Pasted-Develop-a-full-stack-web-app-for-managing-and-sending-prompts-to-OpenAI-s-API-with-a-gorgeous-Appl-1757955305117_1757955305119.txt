@@ -1,0 +1,46 @@
+Develop a full-stack web app for managing and sending prompts to OpenAI’s API, with a gorgeous, Apple-inspired GUI.
+
+Frontend (React preferred, or HTML/JS):
+
+Design the UI using Apple Human Interface Guidelines (flat, clean, elegant, soft gradients, rounded corners, subtle drop shadows, smooth animations).
+
+The main screen should include:
+
+A stylish dropdown/menu for selecting OpenAI models (e.g., gpt-4, gpt-4o-mini, gpt-3.5-turbo).
+
+A large, rounded text input area for composing prompts.
+
+A visually appealing panel (side or top) for managing saved prompts—show each as a card with title, description, and a quick "inject" button.
+
+A prominent, tactile 'Send' button, animated on click, reflecting Apple's button design.
+
+Results/responses should appear in a chat-like window with bubbles, subtle backgrounds, smooth scroll, and elegant typefaces (preferably San Francisco or system font).
+
+A collapsible history panel, visually separated, showing recent interactions.
+
+Use consistent font sizes, system font stacks (-apple-system, BlinkMacSystemFont, "San Francisco", ...), and pay close attention to spacing, padding, and color tones.
+
+Backend (Node.js + Express + SQLite3):
+
+All prior requirements stay the same (OpenAI SDK, endpoints for prompt management, history, etc).
+
+Other Requirements:
+
+The app should look and feel like a native Mac/iOS app.
+
+Include a light/dark mode toggle, with Apple-style transition effects.
+
+Provide a loading spinner/indicator using Apple’s minimalist style when waiting for API responses.
+
+Environment config via .env for OpenAI API key.
+
+Setup instructions, sample database schema, and modular file structure.
+
+Deliver:
+
+Full source code (frontend/backend), intentionally styled and implemented to reflect Apple’s UI philosophy: visually calm, focus on content, intuitive for touch/mouse use, and delightfully responsive.
+
+Readme/setup guide.
+
+Goal:
+A productivity tool that "feels" like an Apple app: user selects a model, picks/edits/injects a prompt, sends, and instantly sees beautiful, accessible results/history—all through an elegant, Apple-quality interface.
