@@ -1,4 +1,4 @@
-import { MessageSquare, BookOpen, Settings, Sparkles } from "lucide-react";
+import { MessageSquare, BookOpen, Sparkles } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -9,10 +9,8 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarHeader,
-  SidebarFooter,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-import ThemeToggle from "./ThemeToggle";
 
 interface AppSidebarProps {
   activeView: 'chat' | 'prompts';
@@ -81,15 +79,6 @@ export default function AppSidebar({ activeView, onViewChange }: AppSidebarProps
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="border-t border-sidebar-border">
-        <div className="flex items-center justify-between px-4 py-3">
-          <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
-            <Settings className="h-4 w-4 mr-2" />
-            Settings
-          </Button>
-          <ThemeToggle />
-        </div>
-      </SidebarFooter>
     </Sidebar>
   );
 }

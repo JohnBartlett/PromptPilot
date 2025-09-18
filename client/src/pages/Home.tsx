@@ -9,6 +9,8 @@ import SavedPrompts from "@/components/SavedPrompts";
 import ConversationHistory from "@/components/ConversationHistory";
 import ThemeToggle from "@/components/ThemeToggle";
 import BuyMeCoffeeButton from "@/components/BuyMeCoffeeButton";
+import { Settings } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { getPrompts, createPrompt, updatePrompt, deletePrompt, getConversations, createConversation, deleteConversation } from "@/lib/api";
 import type { Prompt, Conversation, InsertPrompt } from "@shared/schema";
 
@@ -183,6 +185,10 @@ export default function Home() {
                 <SidebarTrigger data-testid="button-sidebar-toggle" />
                 <div className="flex items-center gap-3">
                   <BuyMeCoffeeButton username="johnbartlett" size="default" variant="ghost" />
+                  <Button variant="ghost" size="default" data-testid="button-settings">
+                    <Settings className="h-4 w-4 mr-2" />
+                    <span className="hidden sm:inline">Settings</span>
+                  </Button>
                   <ThemeToggle />
                 </div>
               </header>
