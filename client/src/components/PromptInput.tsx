@@ -8,13 +8,15 @@ interface PromptInputProps {
   onInjectPrompt?: (prompt: string) => void;
   isLoading?: boolean;
   placeholder?: string;
+  disabled?: boolean;
 }
 
 export default function PromptInput({ 
   onSend, 
   onInjectPrompt, 
   isLoading = false,
-  placeholder = "Type your prompt here..."
+  placeholder = "Type your prompt here...",
+  disabled = false
 }: PromptInputProps) {
   const [prompt, setPrompt] = useState("");
 
@@ -44,7 +46,7 @@ export default function PromptInput({
         onChange={(e) => setPrompt(e.target.value)}
         onKeyDown={handleKeyDown}
         placeholder={placeholder}
-        disabled={isLoading}
+        disabled={isLoading || disabled}
         data-testid="textarea-prompt-input"
         className="min-h-[120px] resize-none border-0 bg-transparent text-base placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0 p-4 pr-16"
       />
@@ -54,7 +56,7 @@ export default function PromptInput({
         </div>
         <Button
           onClick={handleSend}
-          disabled={!prompt.trim() || isLoading}
+          disabled={!prompt.trim() || isLoading || disabled}
           size="icon"
           data-testid="button-send-prompt"
           className="rounded-lg shadow-sm transition-all duration-200"

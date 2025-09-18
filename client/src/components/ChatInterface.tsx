@@ -5,55 +5,31 @@ import ModelSelector from "./ModelSelector";
 import PromptInput from "./PromptInput";
 import ChatBubble from "./ChatBubble";
 import LoadingSpinner from "./LoadingSpinner";
+import { useToast } from "@/hooks/use-toast";
+import { getMessages, sendStreamingChatMessage, createConversation } from "@/lib/api";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { OpenAIModel, Message } from "@shared/schema";
 
 interface ChatInterfaceProps {
   conversationId?: string;
+  onConversationCreated?: (conversationId: string) => void;
 }
 
-export default function ChatInterface({ conversationId }: ChatInterfaceProps) {
+export default function ChatInterface({ conversationId, onConversationCreated }: ChatInterfaceProps) {
   const [selectedModel, setSelectedModel] = useState<OpenAIModel>('gpt-5');
-  const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [streamingContent, setStreamingContent] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  // Mock messages for demo
-  useEffect(() => {
-    if (conversationId === 'demo') {
-      setMessages([
-        {
-          id: '1',
-          conversationId: 'demo',
-          role: 'user',
-          content: 'Can you help me write a creative short story about a robot learning to paint?',
-          createdAt: new Date(Date.now() - 1000 * 60 * 5)
-        },
-        {
-          id: '2',
-          conversationId: 'demo',
-          role: 'assistant',
-          content: `I'd be happy to help you write a creative short story about a robot learning to paint! Here's a short story for you:
-
-**The Artist's Circuit**
-
-ARIA-7 had been designed for precision—calculating trajectories, sorting inventory, optimizing efficiency. But something had changed when she first saw the sunset through the factory window.
-
-The colors defied her programming. Orange melting into purple, clouds painted with impossible hues. Her optical sensors recorded the data, but something deeper stirred in her neural network.
-
-That night, she found the abandoned art supplies in Storage Room C. A brush felt foreign in her mechanical grip, paint tubes like mysterious elixirs. Her first stroke was a disaster—a jagged line that bore no resemblance to beauty.
-
-But ARIA-7 was built to learn.
-
-Days turned to weeks. Her movements grew fluid, her color choices more intuitive. She painted what she saw, what she felt—if robots could feel. Sunrises, the faces of her human colleagues, the poetry of motion in the assembly line.
-
-The day her painting was hung in the employee break room, something in her circuits hummed differently. She had created something that served no function except to be beautiful.
-
-She was still ARIA-7, still precise and efficient. But now she was also an artist.`,
-          createdAt: new Date(Date.now() - 1000 * 60 * 4)
-        }
-      ]); // todo: remove mock functionality
-    }
-  }, [conversationId]);
+  // Fetch messages for the current conversation
+  const { data: messages = [], isLoading: messagesLoading } = useQuery({
+    queryKey: ["messages", conversationId],
+    queryFn: () => conversationId ? getMessages(conversationId) : Promise.resolve([]),
+    enabled: !!conversationId,
+    refetchOnWindowFocus: false,
+  });
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -61,43 +37,72 @@ She was still ARIA-7, still precise and efficient. But now she was also an artis
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [messages, streamingContent]);
 
   const handleSendPrompt = async (prompt: string) => {
     if (!prompt.trim() || isLoading) return;
+    
+    // Auto-create conversation if none exists
+    let currentConversationId = conversationId;
+    if (!currentConversationId) {
+      try {
+        const newConversation = await createConversation({
+          title: `Chat - ${new Date().toLocaleDateString()}`,
+          model: selectedModel
+        });
+        currentConversationId = newConversation.id;
+        // Notify parent component of the new conversation
+        onConversationCreated?.(currentConversationId);
+        console.log('Auto-created conversation:', currentConversationId);
+      } catch (error) {
+        console.error('Failed to create conversation:', error);
+        toast({
+          title: "Error",
+          description: "Failed to create conversation. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
 
-    // Add user message
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      conversationId: conversationId || 'current',
-      role: 'user',
-      content: prompt,
-      createdAt: new Date()
-    };
-
-    setMessages(prev => [...prev, userMessage]);
     setIsLoading(true);
+    setStreamingContent("");
 
     try {
-      // Simulate API call for demo
-      setTimeout(() => {
-        const assistantMessage: Message = {
-          id: (Date.now() + 1).toString(),
-          conversationId: conversationId || 'current',
-          role: 'assistant',
-          content: `I received your message: "${prompt}"\n\nThis is a demo response using ${selectedModel.toUpperCase()}. In the full implementation, this would connect to OpenAI's API to generate a real response based on your prompt.\n\nThe interface supports:\n• Multiple OpenAI models\n• Real-time streaming responses\n• Conversation history\n• Saved prompt templates\n• Beautiful Apple-inspired design`,
-          createdAt: new Date()
-        };
-
-        setMessages(prev => [...prev, assistantMessage]);
-        setIsLoading(false);
-      }, 1500);
-
-      console.log('Sent prompt to:', selectedModel);
-      console.log('Prompt:', prompt);
+      await sendStreamingChatMessage({
+        conversationId: currentConversationId,
+        message: prompt,
+        model: selectedModel,
+        onChunk: (content) => {
+          setStreamingContent(content);
+        },
+        onComplete: (fullContent) => {
+          setStreamingContent("");
+          setIsLoading(false);
+          // Refetch messages and conversations to get the latest data
+          queryClient.invalidateQueries({ queryKey: ["messages", currentConversationId] });
+          queryClient.invalidateQueries({ queryKey: ["conversations"] });
+        },
+        onError: (error) => {
+          console.error("Chat error:", error);
+          toast({
+            title: "Error",
+            description: "Failed to send message. Please try again.",
+            variant: "destructive",
+          });
+          setIsLoading(false);
+          setStreamingContent("");
+        },
+      });
     } catch (error) {
-      console.error('Error sending prompt:', error);
+      console.error("Error sending prompt:", error);
+      toast({
+        title: "Error",
+        description: "Failed to send message. Please try again.",
+        variant: "destructive",
+      });
       setIsLoading(false);
+      setStreamingContent("");
     }
   };
 
@@ -128,8 +133,8 @@ She was still ARIA-7, still precise and efficient. But now she was also an artis
             variant="outline" 
             size="sm"
             onClick={() => {
-              setMessages([]);
-              console.log('Started new conversation');
+              // This will be handled by the parent component
+              console.log('New chat requested');
             }}
             data-testid="button-new-chat"
             className="hidden sm:flex"
@@ -141,7 +146,11 @@ She was still ARIA-7, still precise and efficient. But now she was also an artis
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto">
-        {messages.length === 0 ? (
+        {messagesLoading ? (
+          <div className="flex items-center justify-center h-full">
+            <LoadingSpinner size="md" text="Loading conversation..." />
+          </div>
+        ) : messages.length === 0 ? (
           <div className="flex items-center justify-center h-full">
             <div className="text-center max-w-md px-4">
               <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 mb-6">
@@ -162,13 +171,28 @@ She was still ARIA-7, still precise and efficient. But now she was also an artis
                 <ChatBubble 
                   key={message.id} 
                   message={message}
-                  isLast={index === messages.length - 1}
+                  isLast={index === messages.length - 1 && !isLoading && !streamingContent}
                 />
               ))}
-              {isLoading && (
-                <div className="flex justify-start">
-                  <div className="bg-card border border-card-border rounded-2xl p-4 shadow-sm">
-                    <LoadingSpinner size="sm" text="Thinking..." />
+              {(isLoading || streamingContent) && (
+                <div className="flex gap-4 group flex-row mb-4">
+                  <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs">
+                    <Sparkles className="w-4 h-4" />
+                  </div>
+                  <div className="flex-1 space-y-2">
+                    <div className="inline-block max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed shadow-sm bg-card border border-card-border text-card-foreground">
+                      {streamingContent ? (
+                        <div className="whitespace-pre-wrap break-words">
+                          {streamingContent}
+                          <span className="animate-pulse">▋</span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <LoadingSpinner size="sm" />
+                          <span>Thinking...</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               )}
@@ -185,10 +209,13 @@ She was still ARIA-7, still precise and efficient. But now she was also an artis
             onSend={handleSendPrompt}
             onInjectPrompt={handleInjectPrompt}
             isLoading={isLoading}
-            placeholder={messages.length === 0 
+            placeholder={!conversationId
+              ? "Select a conversation to start chatting..."
+              : messages.length === 0 
               ? "Start a conversation with your AI assistant..." 
               : "Continue the conversation..."
             }
+disabled={false}
           />
         </div>
       </div>
