@@ -182,7 +182,7 @@ export default function Home() {
               <header className="flex items-center justify-between p-4 border-b border-border bg-card/50 backdrop-blur-sm">
                 <SidebarTrigger data-testid="button-sidebar-toggle" />
                 <div className="flex items-center gap-3">
-                  <BuyMeCoffeeButton username="yourname" size="default" variant="ghost" />
+                  <BuyMeCoffeeButton username="johnbartlett" size="default" variant="ghost" />
                   <ThemeToggle />
                 </div>
               </header>
