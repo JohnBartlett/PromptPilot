@@ -8,6 +8,7 @@ import ChatInterface from "@/components/ChatInterface";
 import SavedPrompts from "@/components/SavedPrompts";
 import ConversationHistory from "@/components/ConversationHistory";
 import ThemeToggle from "@/components/ThemeToggle";
+import BuyMeCoffeeButton from "@/components/BuyMeCoffeeButton";
 import { getPrompts, createPrompt, updatePrompt, deletePrompt, getConversations, createConversation, deleteConversation } from "@/lib/api";
 import type { Prompt, Conversation, InsertPrompt } from "@shared/schema";
 
@@ -180,7 +181,10 @@ export default function Home() {
             <div className="flex flex-col flex-1">
               <header className="flex items-center justify-between p-4 border-b border-border bg-card/50 backdrop-blur-sm">
                 <SidebarTrigger data-testid="button-sidebar-toggle" />
-                <ThemeToggle />
+                <div className="flex items-center gap-3">
+                  <BuyMeCoffeeButton username="yourname" size="default" variant="ghost" />
+                  <ThemeToggle />
+                </div>
               </header>
               
               <main className="flex-1 overflow-hidden">
